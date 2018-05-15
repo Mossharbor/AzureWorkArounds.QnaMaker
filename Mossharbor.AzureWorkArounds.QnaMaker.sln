@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2037
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mossharbor.AzureWorkArounds.QnaMaker", "Mossharbor.AzureWorkArounds.QnaMaker\Mossharbor.AzureWorkArounds.QnaMaker.csproj", "{C908C901-D780-4E5E-9352-62614D14CCF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{352A17BE-C998-44E9-9395-08DC1EA24582}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C908C901-D780-4E5E-9352-62614D14CCF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C908C901-D780-4E5E-9352-62614D14CCF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C908C901-D780-4E5E-9352-62614D14CCF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C908C901-D780-4E5E-9352-62614D14CCF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{352A17BE-C998-44E9-9395-08DC1EA24582}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{352A17BE-C998-44E9-9395-08DC1EA24582}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{352A17BE-C998-44E9-9395-08DC1EA24582}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{352A17BE-C998-44E9-9395-08DC1EA24582}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8BE08A63-4953-4294-B53B-F7E55CD94F02}
+	EndGlobalSection
+EndGlobal
