@@ -7,6 +7,9 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 {
     using Mossharbor.AzureWorkArounds.QnaMaker.Json;
 
+    /// <summary>
+    /// This class builds up the json file that the Update and Replace QnaMaker Rest api's require.
+    /// </summary>
     public class QnaUpdateBuilder
     {
         private QnAMaker maker = null;
@@ -31,7 +34,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         }
 
         /// <summary>
-        /// Begin building the IActivity
+        /// Begin building the QnaMaker Json
         /// </summary>
         /// <returns>A builder to be used in the builder pattern</returns>
         public QnaUpdateBuilder Begin(QnAMaker maker)
@@ -102,11 +105,23 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return qList.ToArray();
         }
 
+        /// <summary>
+        /// Remove a question from the answer
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <param name="question"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder RemoveQuestion(string answer, string question)
         {
             return RemoveQuestions(answer, new string[] { question });
         }
 
+        /// <summary>
+        /// removes multiple questions from an answer
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <param name="questions"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder RemoveQuestions(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
@@ -133,6 +148,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return this;
         }
 
+        /// <summary>
+        /// Removes all instance of a question in all answers
+        /// </summary>
+        /// <param name="question"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder RemoveQuestion(string question)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
@@ -204,6 +224,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return this;
         }
 
+        /// <summary>
+        /// Removes an answer
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder RemoveAnswer(string answer)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
@@ -231,11 +256,23 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return this;
         }
 
+        /// <summary>
+        /// Adds a question and answer pair.  If the answer already exists in the kb then we append the question if it is new to the answer.
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <param name="question"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder AddQuestionAndAnswer(string answer, string question)
         {
             return this.AddQuestionsAndAnswer(answer, new string[] { question });
         }
 
+        /// <summary>
+        /// Adds multiple questions to an answer.  If the answer already exists in the kb then we append the questions, if he question is new to the answer.
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <param name="questions"></param>
+        /// <returns>The builder for the continuation</returns>
         public QnaUpdateBuilder AddQuestionsAndAnswer(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
@@ -332,9 +369,9 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         }
 
         /// <summary>
-        /// Run through the function chain and actually build the IActivity.
+        /// Run through the function chain and actually build the Json the call the update using the QnaMaker Rest API
         /// </summary>
-        /// <returns>the activity that we built</returns>
+        /// <returns>true if we got back a successful http response code from the rest api</returns>
         public bool Update()
         {
             var t = this.fn(null);
