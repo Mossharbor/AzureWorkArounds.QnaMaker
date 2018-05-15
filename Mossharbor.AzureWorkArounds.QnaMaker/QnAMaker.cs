@@ -68,10 +68,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             {
                 if (null == t.answer)
                     continue;
-                var found = t.questions.FirstOrDefault(p => p.Equals(question, comparison);
+                var found = t.questions.FirstOrDefault(p => p.Equals(question, comparison));
 
                 if (String.IsNullOrEmpty(found))
-                    answers.Add(new Answer() { id =zt.id, answer = t.answer, metadata = t.metadata, questions = t.questions, source = t.source, score = 0 });
+                    answers.Add(new Answer() { id =t.id, answer = t.answer, metadata = t.metadata, questions = t.questions, source = t.source, score = 0 });
             }
 
             return answers;
