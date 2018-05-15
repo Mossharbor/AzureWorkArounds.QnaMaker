@@ -104,10 +104,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
         public QnaUpdateBuilder RemoveQuestion(string answer, string question)
         {
-            return RemoveQuestion(answer, new string[] { question });
+            return RemoveQuestions(answer, new string[] { question });
         }
 
-        public QnaUpdateBuilder RemoveQuestion(string answer, string[] questions)
+        public QnaUpdateBuilder RemoveQuestions(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
@@ -233,10 +233,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
         public QnaUpdateBuilder AddQuestionAndAnswer(string answer, string question)
         {
-            return this.AddQuestionAndAnswer(answer, new string[] { question });
+            return this.AddQuestionsAndAnswer(answer, new string[] { question });
         }
 
-        public QnaUpdateBuilder AddQuestionAndAnswer(string answer, string[] questions)
+        public QnaUpdateBuilder AddQuestionsAndAnswer(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {

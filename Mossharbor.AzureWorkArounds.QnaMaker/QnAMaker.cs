@@ -11,6 +11,9 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
     using Mossharbor.AzureWorkArounds.QnaMaker.Json;
     using System.Linq;
 
+    /// <summary>
+    /// This class directly interacts with the QnaMakers rest api
+    /// </summary>
     public class QnAMaker
     {
         //static string host = "https://mixedrealityheadsetqna.azurewebsites.net";
@@ -19,6 +22,13 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         string ocpApimSubscriptionKey;
         string azureServicName;
 
+        /// <summary>
+        /// basic constructor
+        /// </summary>
+        /// <param name="azureServicName">this is the name of your azure service</param>
+        /// <param name="knowledgebase">this is your knowledgebase guid</param>
+        /// <param name="key">This is your endpoint key</param>
+        /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
         public QnAMaker(string azureServicName, string knowledgebase, string key, string ocpApimSubscriptionKey)
         {
             this.knowledgebase = knowledgebase;
@@ -29,6 +39,12 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
         private Qnadocument[] kbData = null;
 
+        /// <summary>
+        /// Return the list of questions for this answer
+        /// </summary>
+        /// <param name="answer">the answer we need to get the list of questions for</param>
+        /// <param name="comparison"></param>
+        /// <returns>a list of questions</returns>
         public List<string> GetQuestionsFor(string answer, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
         {
             List<string> questions = new List<string>();
@@ -45,6 +61,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return questions;
         }
 
+        /// <summary>
+        /// Returns All of the answers in the KB
+        /// </summary>
+        /// <returns>All of the answers in the KB</returns>
         public List<string> GetAnswerStrings()
         {
             List<string> answers = new List<string>();
@@ -60,6 +80,12 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return answers;
         }
 
+        /// <summary>
+        /// Returns a list of all the answers that are valid for a specifc question
+        /// </summary>
+        /// <param name="question">a question we woudl like to find the answers to</param>
+        /// <param name="comparison"></param>
+        /// <returns>a list of all the answers that are valid for a specifc question</returns>
         public List<Answer> GetAnswersWith(string question, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
         {
             List<Answer> answers = new List<Answer>();
@@ -77,6 +103,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return answers;
         }
 
+        /// <summary>
+        /// Gets the full list of answers in the DB
+        /// </summary>
+        /// <returns>the full list of answers in the DB</returns>
         public List<Answer> GetAnswers()
         {
             List<Answer> answers = new List<Answer>();
@@ -92,6 +122,9 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return answers;
         }
 
+        /// <summary>
+        /// This is a full list of all the data in the kownledge base
+        /// </summary>
         public  Qnadocument[] KBData
         {
             get
@@ -102,11 +135,17 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
+        /// <summary>
+        /// Indicates that we need to redownload the kb
+        /// </summary>
         internal void Reset()
         {
             this.kbData = null;
         }
 
+        /// <summary>
+        /// Publishes the test environment to production.
+        /// </summary>
         public void Publish()
         {
             string host = "https://westus.api.cognitive.microsoft.com";
@@ -125,7 +164,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
-        public bool Update(UpdateRootobject toPublish)
+        internal bool Update(UpdateRootobject toPublish)
         {
             if (null == toPublish.add?.qnaList && null == toPublish.delete?.ids && null == toPublish.update?.qnaList)
                 return false;
@@ -158,7 +197,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return newArray;
         }
 
-        public bool Replace(UpdateRootobject toPublish)
+        internal bool Replace(UpdateRootobject toPublish)
         {
             if (null == toPublish.add?.qnaList && null == toPublish.update?.qnaList)
                 return false;
@@ -194,6 +233,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
+        /// <summary>
+        /// Returns a list of questions for a specific answer
+        /// </summary>
+        /// <param name="answer">the answer we are trying to compare against</param>
+        /// <returns>a list of questions for a specific answer</returns>
         public string[] GetQuestionsForAnswer(string answer)
         {
             foreach (Qnadocument doc in KBData)
@@ -204,6 +248,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return new string[0];
         }
 
+        /// <summary>
+        /// Get the specific answer id in the kb
+        /// </summary>
+        /// <param name="answer">The answer we are looking for</param>
+        /// <returns>the specific answer id in the kb</returns>
         public int GetAnswerID(string answer)
         {
             foreach(Qnadocument doc in KBData)
@@ -215,30 +264,58 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return -1;
         }
 
+        /// <summary>
+        /// Delete the answer out of a db
+        /// </summary>
+        /// <param name="answer">the answer to delete</param>
+        /// <returns>true if the rest call returns success</returns>
         public bool DeleteAnswer(string answer)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
             return builder.Begin(this).RemoveAnswer(answer).Update();
         }
 
+        /// <summary>
+        /// Deletes any question that matches out of the db
+        /// </summary>
+        /// <param name="question">The question we are trying to delete</param>
+        /// <returns>true if the rest call returns success</returns>
         public bool DeleteQuestion(string question)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
             return builder.Begin(this).RemoveQuestion(question).Update();
         }
 
+        /// <summary>
+        /// Delete a question for a specific answer
+        /// </summary>
+        /// <param name="answer">The answer we are tring to match</param>
+        /// <param name="question">The question we are trying to answer</param>
+        /// <returns>true if the rest call returns success</returns>
         public bool DeleteQuestion(string answer, string question)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
             return builder.Begin(this).RemoveQuestion(answer, question).Update();
         }
 
+        /// <summary>
+        /// Delete a list of questions from a specific answer in the db
+        /// </summary>
+        /// <param name="answer">The answer we are looking for</param>
+        /// <param name="questions">The question list we are trying to remove</param>
+        /// <returns></returns>
         public bool DeleteQuestions(string answer, string[] questions)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestion(answer, questions).Update();
+            return builder.Begin(this).RemoveQuestions(answer, questions).Update();
         }
 
+        /// <summary>
+        /// Call the Knowledge base and get it to return an answer
+        /// </summary>
+        /// <param name="question">The question we would like to run through the kb</param>
+        /// <param name="count">the number of answers we would like to return (3 is default)</param>
+        /// <returns>a list of answers</returns>
         public Answer[] GenerateAnswer(string question, int count = 3)
         {
             string questionJson = "{ \"question\":\""+ question + "\", \"top\":\""+ count + "\"";
@@ -260,7 +337,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
-        public Qnadocument[] GetKnowledgebaseData()
+        private Qnadocument[] GetKnowledgebaseData()
         {
             string host = "https://westus.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
@@ -285,7 +362,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
         }
 
-        public static string GetKnowledgebaseAsString(string knowledgeBase, string ocpApimSubscriptionKey)
+        /// <summary>
+        /// This returns the kb in csv format as a string
+        /// </summary>
+        /// <returns></returns>
+        public string GetKnowledgebaseAsString()
         {
             string strFAQUrl = String.Empty;
             string strLine;
@@ -293,7 +374,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
             {
-                string RequestURI = String.Format("{0}{1}{2}", @"https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/", knowledgeBase, @"? ");
+                string RequestURI = String.Format("{0}{1}{2}", @"https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/", this.knowledgebase, @"? ");
 
                 client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
 
@@ -328,6 +409,12 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             return sb.ToString();
 
         }
+
+        /// <summary>
+        /// this retrieves the specific id for a given question
+        /// </summary>
+        /// <param name="question">The question we are looking for</param>
+        /// <returns>the specific id for a given answer</returns>
         public int[] GetAnswerIDsForQuestion(string question)
         {
             List<int> anwerIds = new List<int>();

@@ -50,7 +50,7 @@ namespace UnitTests
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", new string[] { "Hello", "There" })
+                                .AddQuestionsAndAnswer("Hello", new string[] { "Hello", "There" })
                                 .Update();
 
                 Assert.IsTrue(success);
@@ -77,7 +77,7 @@ namespace UnitTests
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", new string[] { "Hello"})
+                                .AddQuestionsAndAnswer("Hello", new string[] { "Hello"})
                                 .Update();
 
                 Assert.IsTrue(success);
@@ -91,7 +91,7 @@ namespace UnitTests
 
                 success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", new string[] { "There" })
+                                .AddQuestionsAndAnswer("Hello", new string[] { "There" })
                                 .Update();
                 Assert.IsTrue(success);
                 questions = maker.GetQuestionsFor("Hello");
@@ -140,7 +140,7 @@ namespace UnitTests
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", new string[] { "There" , "Again"})
+                                .AddQuestionsAndAnswer("Hello", new string[] { "There" , "Again"})
                                 .Update();
 
                 Assert.IsTrue(success);
