@@ -330,7 +330,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 HttpResponseMessage msg = client.SendAsync(requestMessage).Result;
                 var jsonResponse = msg.Content.ReadAsStringAsync().Result;
                 GetAnswersRootObject answersjson = JsonConvert.DeserializeObject<GetAnswersRootObject>(jsonResponse);
-                if (null == answersjson.error)
+                if (null != answersjson.error)
                     throw new Exception(answersjson.error.message);
 
                 return answersjson.answers;

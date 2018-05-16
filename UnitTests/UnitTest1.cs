@@ -11,8 +11,19 @@ namespace UnitTests
     {
         private QnAMaker GetQnaMaker()
         {
+            string kb = "";
+            string subscriptionKey = "EndpointKey ...";
+            string ocpApimSubscriptionKey = "";
+
             // TODO enter you credentials in here!!
-            return new QnAMaker("", "", "", "");
+            return new QnAMaker("mixedrealityheadsetqna", kb, subscriptionKey, ocpApimSubscriptionKey);
+        }
+
+        [TestMethod]
+        public  void GetAnswer()
+        {
+            var qna = GetQnaMaker();
+            var answers = qna.GenerateAnswer("hi");
         }
 
         [TestMethod]
