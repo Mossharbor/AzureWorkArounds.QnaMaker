@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Mossharbor.AzureWorkArounds.QnaMaker</id>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <authors>M@ J.</authors>
     <owners>M@ J.</owners>
     <licenseUrl>https://raw.githubusercontent.com/Mossharbor/AzureWorkArounds.QnaMaker/master/LICENSE</licenseUrl>
@@ -10,7 +10,7 @@
     <!-- <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl> -->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>.Net wrapper around QnaMaker Rest Apis</description>
-    <releaseNotes>Initial Check-in support adding/removing/updating questions and answers in QnAMaker</releaseNotes>
+    <releaseNotes>Fixed issues with Generate Answers</releaseNotes>
     <copyright>Copyright 2018 Mossharbor</copyright>
     <tags>QnaMaker dotnetcore Azure</tags>
   </metadata>
