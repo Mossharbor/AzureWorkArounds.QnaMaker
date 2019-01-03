@@ -16,7 +16,6 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
     /// </summary>
     public class QnAMaker
     {
-        //static string host = "https://mixedrealityheadsetqna.azurewebsites.net";
         string knowledgebase;
         string key;
         string ocpApimSubscriptionKey;

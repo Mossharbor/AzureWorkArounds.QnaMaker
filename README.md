@@ -7,8 +7,11 @@ Install the nuget package:  [Install-Package Mossharbor.AzureWorkArounds.QnaMake
 ```cs
 using Mossharbor.AzureWorkArounds.QnaMaker;
 
-// TODO enter your credentials in here!!
-QnAMaker maker =new QnAMaker("", "", "", "");
+// Ask a question
+QnAMaker maker =new QnAMaker("", "", "", ""); // TODO enter your credentials in here!!
+var answers = maker.GenerateAnswer("hi");
+
+// Building/Modifying existing QnA information
 QnaUpdateBuilder builder = new QnaUpdateBuilder();
 
 // add new answer and questions to your qna knowledgebase
