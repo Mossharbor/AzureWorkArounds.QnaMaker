@@ -12,7 +12,7 @@ namespace UnitTests
         private QnAMaker GetQnaMaker()
         {
             string kb = "";
-            string subscriptionKey = "EndpointKey ...";
+            string subscriptionKey = "EndpointKey ....";
             string ocpApimSubscriptionKey = "";
 
             // TODO enter you credentials in here!!
