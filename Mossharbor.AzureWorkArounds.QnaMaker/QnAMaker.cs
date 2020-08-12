@@ -430,5 +430,22 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
             return anwerIds.ToArray();
         }
+
+        public void Train()
+        {
+            // POST {RuntimeEndpoint}/qnamaker/knowledgebases/{kbId}/train
+            string uri = $"https://{this.endpoint}.api.cognitive.microsoft.com/qnamaker/knowledgebases/{this.knowledgebase}/train";
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Post;
+                request.RequestUri = new Uri(uri);
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
+
+                var response = client.SendAsync(request).Result;
+
+                response.EnsureSuccessStatusCode();
+            }
+        }
     }
 }
