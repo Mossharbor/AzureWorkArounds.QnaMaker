@@ -20,6 +20,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         string key;
         string ocpApimSubscriptionKey;
         string azureServicName;
+        string endpoint;
 
         /// <summary>
         /// basic constructor
@@ -28,12 +29,13 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="knowledgebase">this is your knowledgebase guid</param>
         /// <param name="key">This is your endpoint key</param>
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
-        public QnAMaker(string azureServicName, string knowledgebase, string key, string ocpApimSubscriptionKey)
+        public QnAMaker(string azureServicName, string knowledgebase, string key, string ocpApimSubscriptionKey, string endPoint = "westus")
         {
             this.knowledgebase = knowledgebase;
             this.key = key;
             this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
             this.azureServicName = azureServicName;
+            this.endpoint = endPoint;
         }
 
         private Qnadocument[] kbData = null;
@@ -147,7 +149,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// </summary>
         public void Publish()
         {
-            string host = "https://westus.api.cognitive.microsoft.com";
+            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}/";
             var method_kb = String.Format(method, this.knowledgebase);
@@ -168,7 +170,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             if (null == toPublish.add?.qnaList && null == toPublish.delete?.ids && null == toPublish.update?.qnaList)
                 return false;
             
-            string host = "https://westus.api.cognitive.microsoft.com";
+            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}";
             var method_with_id = String.Format(method, this.knowledgebase);
@@ -212,7 +214,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             Add newAdd = new Add();
             newAdd.qnaList = list;
 
-            string host = "https://westus.api.cognitive.microsoft.com";
+            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}";
             var method_with_id = String.Format(method, this.knowledgebase);
@@ -338,7 +340,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
         private Qnadocument[] GetKnowledgebaseData()
         {
-            string host = "https://westus.api.cognitive.microsoft.com";
+            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}/{1}/qna/";
             string env = "Test";
@@ -373,7 +375,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
 
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
             {
-                string RequestURI = String.Format("{0}{1}{2}", @"https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/", this.knowledgebase, @"? ");
+                string RequestURI = String.Format("{0}{1}{2}", $"https://{this.endpoint}.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/", this.knowledgebase, @"? ");
 
                 client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
 
