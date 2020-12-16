@@ -574,7 +574,7 @@ function Invoke-PrintMessage
 
 function GetPackageVersion
 {
-	[xml]$data0 = Get-Content -Path ${$env:VERSIONFILE}
+	[xml]$data0 = Get-Content -Path $env:VERSIONFILE
 	$version = $data0.package.metadata.version;
 	Write-Host $version
 }
@@ -586,7 +586,7 @@ function UpdatePackageVersion
         [Parameter(Mandatory = $true)]
         [string] $VersionString
     )
-	[xml]$data0 = Get-Content -Path ${$env:VERSIONFILE}
+	[xml]$data0 = Get-Content -Path $env:VERSIONFILE
 	$oldversion = $data0.package.metadata.version;
 	$oldVersionString = "<version>"+$oldversion+"</version>"
 	$newVersionSting = "<version>"+$VersionString+"</version>"
@@ -607,7 +607,7 @@ function PublishNugetPackages
         [string] $nugetApiKey
     )
 	
-	[xml]$data0 = Get-Content -Path ${$env:VERSIONFILE}
+	[xml]$data0 = Get-Content -Path $env:VERSIONFILE
 	$currentVersion = $data0.package.metadata.version;
 	
     $nuspecFiles = Get-ChildItem $env:Root -recurse ("*"+$currentVersion + ".nupkg")

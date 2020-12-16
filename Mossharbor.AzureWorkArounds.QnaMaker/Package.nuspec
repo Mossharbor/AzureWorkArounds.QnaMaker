@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Mossharbor.AzureWorkArounds.QnaMaker</id>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <authors>M@ J.</authors>
     <owners>M@ J.</owners>
     <licenseUrl>https://raw.githubusercontent.com/Mossharbor/AzureWorkArounds.QnaMaker/master/LICENSE</licenseUrl>
