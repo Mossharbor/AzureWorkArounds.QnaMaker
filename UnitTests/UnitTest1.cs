@@ -53,7 +53,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void TAddMultipleQuestionAndAnswer()
+        public void AddMultipleQuestionAndAnswer()
         {
             QnAMaker maker = GetQnaMaker();
             try

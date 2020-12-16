@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- all related code analysis / validation should go into the following .props file -->
+  <!-- <Import Project="$(EnlistmentRoot)\.build\codeanalysis\codeanalysis.props"/>  -->
+  <Import Project="$(EnlistmentRoot)\.build\dependency.version.props"/>
+
+  <PropertyGroup>
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+    <!-- If not specified, Nuget packability is on iff either PackageId or NuSpecFile is defined -->
+    <IsPackable Condition="('$(PackageId)'!='' or '$(NuSpecFile)'!='')">true</IsPackable>
+  </PropertyGroup>
+</Project>
