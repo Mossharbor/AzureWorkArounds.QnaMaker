@@ -615,6 +615,6 @@ function PublishNugetPackages
     {
 		$localPath = Convert-Path $nupkgFile.PSPath
 		Write-Host $localPath
-		dotnet nuget push $localPath --apiKey $nugetApiKey --source https://api.nuget.org/v3/index.json
+		dotnet nuget push $localPath --api-key $nugetApiKey --source https://api.nuget.org/v3/index.json
 	}
 }
