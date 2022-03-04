@@ -32,7 +32,7 @@ QnAKnowledgebase kb =new QnAKnowledgebase(<qna service name>, <knowledge base na
 kb.CreateIfDoesntExist()
 
 
-// and more strings
+// and more quick options for modifying the knowledgebase
 List<string> answers = maker.GetAnswerStrings();
 List<string> questions = maker.GetQuestionsFor("Hello");
 maker.DeleteQuestion("Hello", "There");
