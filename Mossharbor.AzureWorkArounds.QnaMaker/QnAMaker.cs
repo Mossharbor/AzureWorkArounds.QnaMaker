@@ -181,7 +181,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer">the answer we need to get the list of questions for</param>
         /// <param name="comparison"></param>
         /// <returns>a list of questions</returns>
-        public List<string> GetQuestionsFor(string answer, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+        public IEnumerable<string> GetQuestionsFor(string answer, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
         {
             List<string> questions = new List<string>();
 
@@ -201,7 +201,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// Returns All of the answers in the KB
         /// </summary>
         /// <returns>All of the answers in the KB</returns>
-        public List<string> GetAnswerStrings()
+        public IEnumerable<string> GetAnswerStrings()
         {
             List<string> answers = new List<string>();
 
@@ -222,7 +222,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="question">a question we woudl like to find the answers to</param>
         /// <param name="comparison"></param>
         /// <returns>a list of all the answers that are valid for a specifc question</returns>
-        public List<Answer> GetAnswersWith(string question, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+        public IEnumerable<Answer> GetAnswersWith(string question, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
         {
             List<Answer> answers = new List<Answer>();
 
@@ -243,7 +243,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// Gets the full list of answers in the DB
         /// </summary>
         /// <returns>the full list of answers in the DB</returns>
-        public List<Answer> GetAnswers()
+        public IEnumerable<Answer> GetAnswers()
         {
             List<Answer> answers = new List<Answer>();
 

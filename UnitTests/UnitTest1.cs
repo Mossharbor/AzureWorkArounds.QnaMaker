@@ -121,9 +121,9 @@ namespace UnitTests
 
                 Assert.IsTrue(success);
 
-                List<string> answers = maker.GetAnswerStrings();
+                IEnumerable<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
-                List<string> questions = maker.GetQuestionsFor("Hello");
+                IEnumerable<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Hello"));
             }
             finally
@@ -148,10 +148,10 @@ namespace UnitTests
                 Assert.IsTrue(success);
                 System.Threading.Thread.Sleep(1000);
 
-                List<string> answers = maker.GetAnswerStrings();
+                IEnumerable<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
 
-                List<string> questions = maker.GetQuestionsFor("Hello");
+                IEnumerable<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Hello"));
                 Assert.IsTrue(questions.Contains("There"));
             }
@@ -175,10 +175,10 @@ namespace UnitTests
 
                 Assert.IsTrue(success);
 
-                List<string> answers = maker.GetAnswerStrings();
+                IEnumerable<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
 
-                List<string> questions = maker.GetQuestionsFor("Hello");
+                IEnumerable<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Hello"));
                 Assert.IsFalse(questions.Contains("There"));
 
@@ -188,7 +188,9 @@ namespace UnitTests
                                 .UpdateKnowledgebase();
                 Assert.IsTrue(success);
                 questions = maker.GetQuestionsFor("Hello");
+                Assert.IsTrue(questions.Count() == 2);
                 Assert.IsTrue(questions.Contains("There"));
+                Assert.IsTrue(questions.Contains("Hello"));
             }
             finally
             {
@@ -210,9 +212,9 @@ namespace UnitTests
 
                 Assert.IsTrue(success);
 
-                List<string> answers = maker.GetAnswerStrings();
+                IEnumerable<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
-                List<string> questions = maker.GetQuestionsFor("Hello");
+                IEnumerable<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Hello"));
                 maker.DeleteAnswer("Hello");
 
@@ -239,9 +241,9 @@ namespace UnitTests
 
                 Assert.IsTrue(success);
 
-                List<string> answers = maker.GetAnswerStrings();
+                IEnumerable<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
-                List<string> questions = maker.GetQuestionsFor("Hello");
+                IEnumerable<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsFalse(questions.Contains("Hello"));
                 Assert.IsTrue(questions.Contains("There"));
                 Assert.IsTrue(questions.Contains("Again"));
