@@ -220,6 +220,7 @@ namespace UnitTests
 
                 answers = maker.GetAnswerStrings();
                 Assert.IsFalse(answers.Contains("Hello"));
+                Assert.IsFalse(answers.Any());
             }
             finally
             {
@@ -255,6 +256,7 @@ namespace UnitTests
                 questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Again"));
                 Assert.IsTrue(!questions.Contains("There"));
+                Assert.IsTrue(questions.Count() == 1);
             }
             finally
             {
