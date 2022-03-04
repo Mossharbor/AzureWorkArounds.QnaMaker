@@ -14,7 +14,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker.Json
         public File[] files { get; set; }
     }
 
-    public class KnowledgeBaseCreationDetailsRootObject
+    public class KnowledgeBaseOperationDetailsRootObject
     {
         public string operationState { get; set; }
         public DateTime createdTimestamp { get; set; }

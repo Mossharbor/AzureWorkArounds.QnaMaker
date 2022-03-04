@@ -122,10 +122,10 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             if (!this.KnowledgeBaseExists())
             {
                 this.CreateKnowledgeBase(this.knowledgebase);
-                this.details = this.GetDetails();
+                this.details = this.GetDetails(); 
             }
 
-            this.knowledgeBaseId = this.details.id;
+            this.knowledgeBaseId = this.details?.id;
         }
 
         private Qnadocument[] kbData = null;
@@ -172,6 +172,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         private bool KnowledgeBaseExists()
         {
             KnowledgeBaseDetails details = GetDetails();
+            if (null != details)
+                this.details = details;
             return (null != details);
         }
 
@@ -265,7 +267,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             get
             {
-                if (null == kbData)
+                if (null == kbData || 0 == kbData.Length)
                     kbData = GetKnowledgebaseData();
                 return kbData;
             }
@@ -304,11 +306,17 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             if (null == toPublish.add?.qnaList && null == toPublish.delete?.ids && null == toPublish.update?.qnaList)
                 return false;
+
+            if (null == this.details)
+            {
+                this.details = GetDetails();
+                this.knowledgeBaseId = this.details.id;
+            }
             
             string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}";
-            var method_with_id = String.Format(method, this.knowledgebase);
+            var method_with_id = String.Format(method, this.knowledgeBaseId);
             var uri = host + service + method_with_id;
             string requestBody = JsonConvert.SerializeObject(toPublish);
 
@@ -321,8 +329,37 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
                 var response = client.SendAsync(request).Result;
+                WaitForOperationToComplete(client, response);
+
                 return response.IsSuccessStatusCode;
             }
+        }
+
+        private void WaitForOperationToComplete(HttpClient client, HttpResponseMessage response)
+        {
+            string operationResult = response.Content.ReadAsStringAsync().Result;
+            string original = operationResult;
+            var operationDetails = JsonConvert.DeserializeObject<KnowledgeBaseOperationDetailsRootObject>(operationResult);
+
+            // todo add timespan check here.
+            while (operationDetails.operationState == "NotStarted" || operationDetails.operationState == "Running")
+            {
+                System.Threading.Thread.Sleep(1000);
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
+
+                using (var operationRequest = new HttpRequestMessage())
+                {
+                    operationRequest.Method = new HttpMethod("GET");
+                    operationRequest.RequestUri = new Uri($"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/operations/{operationDetails.operationId}");
+
+                    var operationResponse = client.SendAsync(operationRequest).Result;
+                    operationResult = operationResponse.Content.ReadAsStringAsync().Result;
+                    operationDetails = JsonConvert.DeserializeObject<KnowledgeBaseOperationDetailsRootObject>(operationResult);
+                }
+            }
+
+            if (operationDetails.operationState == "Failed")
+                throw new Exception("Failed operation");
         }
 
         private static T[] Combine<T>(T[] oldArray, T[] items)
@@ -498,7 +535,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
 
                 var response = client.SendAsync(request).Result;
-                var t = JsonConvert.DeserializeObject<KnowledgeBaseCreationDetailsRootObject>(response.Content.ReadAsStringAsync().Result);
+                WaitForOperationToComplete(client, response);
             }
         }
 
@@ -519,15 +556,36 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             // Make a web call to get the contents of the
             // .tsv file that contains the database
             string RequestURI = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/knowledgebases/{this.knowledgeBaseId}/{env}/qna";
-            var req = WebRequest.Create(RequestURI);
-            req.Method = "Get";
-            req.Headers.Add("Ocp-Apim-Subscription-Key", this.ocpApimSubscriptionKey);
-            var r = req.GetResponseAsync().Result;
-
-            // Read the response
-            using (var responseReader = new StreamReader(r.GetResponseStream()))
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage())
             {
-                return responseReader.ReadToEnd();
+                request.Method = HttpMethod.Get;
+                request.RequestUri = new Uri(RequestURI);
+                request.Headers.Add("Ocp-Apim-Subscription-Key", this.ocpApimSubscriptionKey);
+                var response = client.SendAsync(request).Result;
+                response.EnsureSuccessStatusCode();
+                return response.Content.ReadAsStringAsync().Result;
+            }
+        }
+
+        public void DeleteKnowledgeBase()
+        {
+            if (null == this.details)
+            {
+                this.details = GetDetails();
+                this.knowledgeBaseId = this.details.id;
+            }
+
+            string RequestURI = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/knowledgebases/{this.knowledgeBaseId}";
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = new Uri(RequestURI);
+                request.Headers.Add("Ocp-Apim-Subscription-Key", this.ocpApimSubscriptionKey);
+                var response = client.SendAsync(request).Result;
+                response.EnsureSuccessStatusCode();
             }
         }
 

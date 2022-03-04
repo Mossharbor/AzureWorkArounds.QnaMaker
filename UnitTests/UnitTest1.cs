@@ -10,34 +10,53 @@ namespace UnitTests
     [TestClass]
     public class QnaMakerUnitTests
     {
-        private QnAMaker GetQnaMaker(string kbToUseForTesting = "qnamakertestkb")
+        List<QnAMaker> makers = new List<QnAMaker>();
+
+        private QnAMaker GetQnaMaker(string kbToUseForTesting = "qnamakertestkb", bool createIfNotExist = true)
         {
             string ocpApimSubscriptionKey = ConfigurationManager.AppSettings["ocpApimSubscriptionKey"];
 
-            return new QnAMaker(ConfigurationManager.AppSettings["qnaMakerName"], kbToUseForTesting, ocpApimSubscriptionKey);
+            var maker = new QnAMaker(ConfigurationManager.AppSettings["qnaMakerName"], kbToUseForTesting, ocpApimSubscriptionKey);
+            if (createIfNotExist)
+                maker.CreateKnowledgeBaseIfDoesntExist();
+            makers.Add(maker);
+            return maker;
         }
 
         [TestMethod]
         public void CreateEmptyKB()
         {
-            var qna = GetQnaMaker("CreateEmptyKnowledgeBaseTest");
+            QnAMaker qna = null;
+            try
+            {
+                qna = GetQnaMaker(nameof(CreateEmptyKB));
 
-            qna.CreateKnowledgeBaseIfDoesntExist();
-
-            string kb = qna.GetKnowledgebaseJson();
+                string kb = qna.GetKnowledgebaseJson();
+                Assert.IsTrue(kb.Contains("qnaDocuments"));
+            }
+            finally
+            {
+                qna.DeleteKnowledgeBase();
+            }
         }
 
         [TestMethod]
-        public  void GetAnswer()
+        public void GetAnswer()
         {
-            var qna = GetQnaMaker();
-            var answers = qna.GenerateAnswer("hi");
+            try
+            {
+                var qna = GetQnaMaker(nameof(GetAnswer));
+                var answers = qna.GenerateAnswer("hi");
+            }
+            finally
+            {
+            }
         }
 
         [TestMethod]
         public void AddQuestionAndAnswer()
         {
-            QnAMaker maker = GetQnaMaker();
+            QnAMaker maker = GetQnaMaker(nameof(AddQuestionAndAnswer));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
@@ -52,18 +71,18 @@ namespace UnitTests
                 Assert.IsTrue(answers.Contains("Hello"));
                 List<string> questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("Hello"));
-
             }
             finally
             {
-                maker.DeleteAnswer("Hello");
+                maker.DeleteKnowledgeBase();
             }
         }
 
         [TestMethod]
         public void AddMultipleQuestionAndAnswer()
         {
-            QnAMaker maker = GetQnaMaker();
+            QnAMaker maker = GetQnaMaker(nameof(AddMultipleQuestionAndAnswer));
+            Assert.IsTrue(maker.GetDetails() != null);
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
@@ -73,6 +92,7 @@ namespace UnitTests
                                 .Update();
 
                 Assert.IsTrue(success);
+                System.Threading.Thread.Sleep(1000);
 
                 List<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
@@ -83,14 +103,14 @@ namespace UnitTests
             }
             finally
             {
-                maker.DeleteAnswer("Hello");
+                maker.DeleteKnowledgeBase();
             }
         }
 
         [TestMethod]
         public void UpdateExistingAnswer()
         {
-            QnAMaker maker = GetQnaMaker();
+            QnAMaker maker = GetQnaMaker(nameof(UpdateExistingAnswer));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
@@ -118,14 +138,14 @@ namespace UnitTests
             }
             finally
             {
-                maker.DeleteAnswer("Hello");
+                maker.DeleteKnowledgeBase();
             }
         }
 
         [TestMethod]
         public void RemoveAnswer()
         {
-            QnAMaker maker = GetQnaMaker();
+            QnAMaker maker = GetQnaMaker(nameof(RemoveAnswer));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
@@ -147,13 +167,14 @@ namespace UnitTests
             }
             finally
             {
+                maker.DeleteKnowledgeBase();
             }
         }
 
         [TestMethod]
         public void RemoveQuestion()
         {
-            QnAMaker maker = GetQnaMaker();
+            QnAMaker maker = GetQnaMaker(nameof(RemoveQuestion));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
@@ -167,7 +188,7 @@ namespace UnitTests
                 List<string> answers = maker.GetAnswerStrings();
                 Assert.IsTrue(answers.Contains("Hello"));
                 List<string> questions = maker.GetQuestionsFor("Hello");
-                Assert.IsTrue(questions.Contains("Hello"));
+                Assert.IsFalse(questions.Contains("Hello"));
                 Assert.IsTrue(questions.Contains("There"));
                 Assert.IsTrue(questions.Contains("Again"));
 
@@ -181,7 +202,7 @@ namespace UnitTests
             }
             finally
             {
-                maker.DeleteAnswer("Hello");
+                maker.DeleteKnowledgeBase();
             }
         }
     }
