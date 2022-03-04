@@ -11,34 +11,169 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
     using Mossharbor.AzureWorkArounds.QnaMaker.Json;
     using System.Linq;
 
+    public enum EnvironmentType { Test, Prod}
+
     /// <summary>
     /// This class directly interacts with the QnaMakers rest api
     /// </summary>
     public class QnAMaker
     {
+        static string baseUrl = "cognitiveservices.azure.com";
         string knowledgebase;
         string key;
         string ocpApimSubscriptionKey;
         string azureServicName;
         string endpoint;
+        string knowledgeBaseId;
+        KnowledgeBaseDetails details;
 
         /// <summary>
         /// basic constructor
         /// </summary>
         /// <param name="azureServicName">this is the name of your azure service</param>
         /// <param name="knowledgebase">this is your knowledgebase guid</param>
-        /// <param name="key">This is your endpoint key</param>
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
-        public QnAMaker(string azureServicName, string knowledgebase, string key, string ocpApimSubscriptionKey, string endPoint = "westus")
+        /// <param name="region">the region westus by default</param>
+        /// <remarks> we load the endpoint key if we need to using the ocpApimSubscriptionKey</remarks>
+        public QnAMaker(string azureServicName, string knowledgebase, string ocpApimSubscriptionKey, string region = "westus")
         {
             this.knowledgebase = knowledgebase;
-            this.key = key;
             this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
             this.azureServicName = azureServicName;
-            this.endpoint = endPoint;
+            this.endpoint = region;
+            this.key = GetPrimaryEndpointKey(ocpApimSubscriptionKey);
+        }
+
+        /// <summary>
+        /// basic constructor
+        /// </summary>
+        /// <param name="azureServicName">this is the name of your azure service</param>
+        /// <param name="knowledgebase">this is your knowledgebase guid</param>
+        /// <param name="endpointKey">This is your endpoint key</param>
+        /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
+        /// <param name="region">the region westus by default</param>
+        public QnAMaker(string azureServicName, string knowledgebase, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
+        {
+            this.knowledgebase = knowledgebase;
+            this.key = endpointKey;
+            this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
+            this.azureServicName = azureServicName;
+            this.endpoint = region;
+        }
+
+        /// <summary>
+        /// basic constructor
+        /// </summary>
+        /// <param name="azureServicName">this is the name of your azure service</param>
+        /// <param name="knowledgebase">this is your knowledgebase guid</param>
+        /// <param name="kowledgebaseId">the id of the knowledgebase (found the POST url after publish POST /knowledgebases/b0a466fc-54bc-476d-a1c3-af10d4c974a2/generateAnswer)</param>
+        /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
+        /// <param name="region">the region westus by default</param>
+        /// <remarks> we load the endpoint key if we need to using the ocpApimSubscriptionKey</remarks>
+        public QnAMaker(string azureServicName, string knowledgebase, Guid kowledgebaseId, string ocpApimSubscriptionKey, string region = "westus")
+        {
+            this.knowledgebase = knowledgebase;
+            this.knowledgeBaseId = kowledgebaseId.ToString();
+            this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
+            this.azureServicName = azureServicName;
+            this.endpoint = region;
+            this.key = GetPrimaryEndpointKey(ocpApimSubscriptionKey);
+        }
+
+        /// <summary>
+        /// basic constructor
+        /// </summary>
+        /// <param name="azureServicName">this is the name of your azure service</param>
+        /// <param name="knowledgebase">this is your knowledgebase guid</param>
+        /// <param name="kowledgebaseId">the id of the knowledgebase (found the POST url after publish POST /knowledgebases/b0a466fc-54bc-476d-a1c3-af10d4c974a2/generateAnswer)</param>
+        /// <param name="endpointKey">This is your endpoint key</param>
+        /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
+        /// <param name="region">the region westus by default</param>
+        public QnAMaker(string azureServicName, string knowledgebase, Guid kowledgebaseId, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
+        {
+            this.knowledgebase = knowledgebase;
+            this.knowledgeBaseId = kowledgebaseId.ToString();
+            this.key = endpointKey;
+            this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
+            this.azureServicName = azureServicName;
+            this.endpoint = region;
+        }
+
+        private string GetPrimaryEndpointKey(string qnaMakerResourceName)
+        {
+            string RequestURI = String.Format(@" https://{0}.{1}/qnamaker/v4.0/endpointkeys", this.azureServicName, baseUrl);
+            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
+                HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, RequestURI);
+
+                HttpResponseMessage msg = client.SendAsync(requestMessage).Result;
+                var jsonResponse = msg.Content.ReadAsStringAsync().Result;
+                KeysRoot keysJson = JsonConvert.DeserializeObject<KeysRoot>(jsonResponse);
+                if (null != keysJson.error)
+                    throw new Exception(keysJson.error.message);
+
+                return keysJson.primaryEndpointKey;
+            }
+        }
+
+        public void CreateKnowledgeBaseIfDoesntExist()
+        {
+            if (!this.KnowledgeBaseExists())
+            {
+                this.CreateKnowledgeBase(this.knowledgebase);
+                this.details = this.GetDetails();
+            }
+
+            this.knowledgeBaseId = this.details.id;
         }
 
         private Qnadocument[] kbData = null;
+
+        public KnowledgeBaseDetails GetDetails()
+        {
+            if (null != this.details)
+                return this.details;
+            
+            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
+            {
+                string RequestURI = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/knowledgebases/";
+
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
+
+                System.Net.Http.HttpResponseMessage msg = client.GetAsync(RequestURI).Result;
+
+                msg.EnsureSuccessStatusCode();
+
+                var JsonDataResponse = msg.Content.ReadAsStringAsync().Result;
+
+                KnowledgeBaseListAllRootObject allKBs = JsonConvert.DeserializeObject<KnowledgeBaseListAllRootObject>(JsonDataResponse);
+
+                if (null == allKBs)
+                    throw new JsonException("Could not deserialize the list of knowledgebases");
+
+                if (!string.IsNullOrEmpty(this.knowledgeBaseId))
+                {
+                    this.details = allKBs.knowledgebases.FirstOrDefault(p => p.id == this.knowledgeBaseId);
+                    return this.details;
+                }
+
+                var allDetails = allKBs.knowledgebases.Where(p => p.name == this.knowledgebase).ToArray();
+                if (allDetails.Length == 0)
+                    return null;
+                if (allDetails.Length > 1)
+                    throw new KeyNotFoundException($"More than one Knowledge base found with name {this.knowledgebase}, please pass in knowledge base id to differentiate them");
+
+                this.details = allDetails[0];
+                return this.details;
+            }
+        }
+
+        private bool KnowledgeBaseExists()
+        {
+            KnowledgeBaseDetails details = GetDetails();
+            return (null != details);
+        }
 
         /// <summary>
         /// Return the list of questions for this answer
@@ -338,77 +473,62 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
-        private Qnadocument[] GetKnowledgebaseData()
+        /// <summary>
+        /// Creates an empty knowledge base
+        /// </summary>
+        /// <param name="knowledgeBaseName">the name of the knowledgebase to create</param>
+        public void CreateKnowledgeBase(string knowledgeBaseName)
         {
             string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
             string service = "/qnamaker/v4.0";
-            string method = "/knowledgebases/{0}/{1}/qna/";
-            string env = "Test";
-            var method_with_id = String.Format(method, this.knowledgebase, env);
-            var uri = host + service + method_with_id;
+            string method = "/knowledgebases/create/";
+            var uri = host + service + method;
+
+            var newKbObj = new CreateKnowledgebaseRootobject();
+            newKbObj.name = knowledgeBaseName;
+
+            string requestBody= JsonConvert.SerializeObject(newKbObj);
 
             using (var client = new HttpClient())
             using (var request = new HttpRequestMessage())
             {
-                request.Method = HttpMethod.Get;
+                request.Method = HttpMethod.Post;
                 request.RequestUri = new Uri(uri);
+                request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
                 client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
 
                 var response = client.SendAsync(request).Result;
-                var t =  JsonConvert.DeserializeObject<KnowledgeBaseRootobject>(response.Content.ReadAsStringAsync().Result).qnaDocuments;
-                if (null == kbData)
-                    kbData = t;
-                return t;
+                var t = JsonConvert.DeserializeObject<KnowledgeBaseCreationDetailsRootObject>(response.Content.ReadAsStringAsync().Result);
             }
-
         }
 
-        /// <summary>
-        /// This returns the kb in csv format as a string
-        /// </summary>
-        /// <returns></returns>
-        public string GetKnowledgebaseAsString()
+        private Qnadocument[] GetKnowledgebaseData(EnvironmentType env = EnvironmentType.Test)
         {
-            string strFAQUrl = String.Empty;
-            string strLine;
-            StringBuilder sb = new StringBuilder();
+            var response = GetKnowledgebaseJson(env);
+            return JsonConvert.DeserializeObject<KnowledgeBaseRootobject>(response).qnaDocuments;
+        }
 
-            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
+        public string GetKnowledgebaseJson(EnvironmentType env = EnvironmentType.Test)
+        {
+            if (null == this.details)
             {
-                string RequestURI = String.Format("{0}{1}{2}", $"https://{this.endpoint}.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/", this.knowledgebase, @"? ");
-
-                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
-
-                System.Net.Http.HttpResponseMessage msg = client.GetAsync(RequestURI).Result;
-
-                if (msg.IsSuccessStatusCode)
-                {
-                    var JsonDataResponse = msg.Content.ReadAsStringAsync().Result;
-
-                    strFAQUrl = JsonConvert.DeserializeObject<string>(JsonDataResponse);
-                }
+                this.details = GetDetails();
+                this.knowledgeBaseId = this.details.id;
             }
 
             // Make a web call to get the contents of the
             // .tsv file that contains the database
-            var req = WebRequest.Create(strFAQUrl);
+            string RequestURI = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/knowledgebases/{this.knowledgeBaseId}/{env}/qna";
+            var req = WebRequest.Create(RequestURI);
+            req.Method = "Get";
+            req.Headers.Add("Ocp-Apim-Subscription-Key", this.ocpApimSubscriptionKey);
             var r = req.GetResponseAsync().Result;
 
             // Read the response
             using (var responseReader = new StreamReader(r.GetResponseStream()))
             {
-                // Read through each line of the response
-                while ((strLine = responseReader.ReadLine()) != null)
-                {
-                    // Write the contents to the StringBuilder object
-                    string[] strCurrentLine = strLine.Split('\t');
-                    sb.Append((String.Format("{0},{1},{2}\n",strCurrentLine[0],strCurrentLine[1],strCurrentLine[2])));
-                }
+                return responseReader.ReadToEnd();
             }
-
-            // Return the contents of the StringBuilder object
-            return sb.ToString();
-
         }
 
         /// <summary>

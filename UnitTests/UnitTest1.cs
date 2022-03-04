@@ -5,18 +5,26 @@ namespace UnitTests
 {
     using Mossharbor.AzureWorkArounds.QnaMaker;
     using System.Collections.Generic;
+    using System.Configuration;
 
     [TestClass]
     public class QnaMakerUnitTests
     {
-        private QnAMaker GetQnaMaker()
+        private QnAMaker GetQnaMaker(string kbToUseForTesting = "qnamakertestkb")
         {
-            string kb = "";
-            string subscriptionKey = "EndpointKey ....";
-            string ocpApimSubscriptionKey = "";
+            string ocpApimSubscriptionKey = ConfigurationManager.AppSettings["ocpApimSubscriptionKey"];
 
-            // TODO enter you credentials in here!!
-            return new QnAMaker("mixedrealityheadsetqna", kb, subscriptionKey, ocpApimSubscriptionKey);
+            return new QnAMaker(ConfigurationManager.AppSettings["qnaMakerName"], kbToUseForTesting, ocpApimSubscriptionKey);
+        }
+
+        [TestMethod]
+        public void CreateEmptyKB()
+        {
+            var qna = GetQnaMaker("CreateEmptyKnowledgeBaseTest");
+
+            qna.CreateKnowledgeBaseIfDoesntExist();
+
+            string kb = qna.GetKnowledgebaseJson();
         }
 
         [TestMethod]

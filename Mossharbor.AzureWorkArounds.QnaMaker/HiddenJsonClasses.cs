@@ -6,6 +6,45 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker.Json
 {
     using Mossharbor.AzureWorkArounds.QnaMaker;
 
+    public class CreateKnowledgebaseRootobject
+    {
+        public string name { get; set; }
+        public Qnalist[] qnAList { get; set; }
+        public string[] urls { get; set; }
+        public File[] files { get; set; }
+    }
+
+    public class KnowledgeBaseCreationDetailsRootObject
+    {
+        public string operationState { get; set; }
+        public DateTime createdTimestamp { get; set; }
+        public DateTime lastActionTimestamp { get; set; }
+        public string userId { get; set; }
+        public string operationId { get; set; }
+    }
+
+    public class KnowledgeBaseListAllRootObject
+    {
+        public KnowledgeBaseDetails[] knowledgebases { get; set; }
+    }
+
+    public class KnowledgeBaseDetails
+    {
+        public string id { get; set; }
+        public string hostName { get; set; }
+        public DateTime lastAccessedTimestamp { get; set; }
+        public DateTime lastChangedTimestamp { get; set; }
+        public DateTime lastPublishedTimestamp { get; set; }
+        public string name { get; set; }
+        public string userId { get; set; }
+        public string language { get; set; }
+        public string enableHierarchicalExtraction { get; set; }
+        public DateTime createdTimestamp { get; set; }
+        public string[] urls { get; set; }
+        public string[] sources { get; set; }
+        public string[] docSearchSources{ get; set; }
+    }
+
     public class ReplaceRootobject
     {
         public Qnalist[] qnAList { get; set; }
@@ -17,6 +56,15 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker.Json
         public Error error { get; set; }
     }
     
+    internal class KeysRoot
+    {
+        public string primaryEndpointKey { get; set; }
+        public string secondaryEndpointKey { get; set; }
+        public string installedVersion { get; set; }
+        public string lastStableVersion { get; set; }
+        public Error error { get; set; }
+    }
+
     public class Error
     {
         public string code { get; set; }
