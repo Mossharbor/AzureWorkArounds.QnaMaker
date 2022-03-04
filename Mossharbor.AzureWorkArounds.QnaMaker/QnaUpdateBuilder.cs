@@ -157,6 +157,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
+                maker.ResetCache();
                 bool removed = false;
                 List<int> answerIdsChecked = new List<int>();
                 List<int> answerIdsToDelete = new List<int>();
@@ -194,7 +195,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                     }
 
                     // remove it from the knowledgebase if we do not already have it.
-                    foreach (var q in maker.KBData)
+                    foreach (var q in maker.KBCache)
                     {
                         if (answerIdsChecked.Contains(q.id))
                             continue;
@@ -298,7 +299,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                         if (null == updateRootObject.update)
                             updateRootObject.update = new Update();
 
-                        Qnalist answerToUpdate = maker.KBData.FirstOrDefault(p => p.id == answerId);
+                        Qnalist answerToUpdate = maker.KBCache.FirstOrDefault(p => p.id == answerId);
 
                         if (null != answerToUpdate)
                         {
@@ -376,7 +377,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             var t = this.fn(null);
             bool success = maker.Update(t);
-            maker.Reset();
+            maker.ResetCache();
             return success;
         }
     }

@@ -126,7 +126,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             this.knowledgeBaseId = this.details?.id;
         }
 
-        private IEnumerable<Qnadocument> kbData = null;
+        private IEnumerable<Qnadocument> kcCache = null;
 
         public KnowledgeBaseDetails GetDetails()
         {
@@ -185,7 +185,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             List<string> questions = new List<string>();
 
-            foreach (var t in KBData)
+            foreach (var t in KBCache)
             {
                 if (null == t.answer)
                     continue;
@@ -205,7 +205,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             List<string> answers = new List<string>();
 
-            foreach (var t in KBData)
+            foreach (var t in KBCache)
             {
                 if (null == t.answer)
                     continue;
@@ -226,7 +226,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             List<Answer> answers = new List<Answer>();
 
-            foreach (var t in KBData)
+            foreach (var t in KBCache)
             {
                 if (null == t.answer)
                     continue;
@@ -247,7 +247,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         {
             List<Answer> answers = new List<Answer>();
 
-            foreach(var t in KBData)
+            foreach(var t in KBCache)
             {
                 if (null == t.answer)
                     continue;
@@ -261,22 +261,22 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <summary>
         /// This is a full list of all the data in the kownledge base
         /// </summary>
-        public  IEnumerable<Qnadocument> KBData
+        internal  IEnumerable<Qnadocument> KBCache
         {
             get
             {
-                if (null == kbData || kbData.Any())
-                    kbData = GetKnowledgebaseData();
-                return kbData;
+                if (null == kcCache || kcCache.Any())
+                    kcCache = GetKnowledgebaseData();
+                return kcCache;
             }
         }
 
         /// <summary>
         /// Indicates that we need to redownload the kb
         /// </summary>
-        internal void Reset()
+        internal void ResetCache()
         {
-            this.kbData = null;
+            this.kcCache = null;
         }
 
         internal bool Update(UpdateRootobject toPublish)
@@ -390,7 +390,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns>a list of questions for a specific answer</returns>
         public string[] GetQuestionsForAnswer(string answer)
         {
-            foreach (Qnadocument doc in KBData)
+            foreach (Qnadocument doc in KBCache)
             {
                 if (doc.answer.Equals(answer, StringComparison.OrdinalIgnoreCase))
                     return doc.questions;
@@ -405,7 +405,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns>the specific answer id in the kb</returns>
         public int GetAnswerID(string answer)
         {
-            foreach(Qnadocument doc in KBData)
+            foreach(Qnadocument doc in KBCache)
             {
                 if (doc.answer.Equals(answer, StringComparison.OrdinalIgnoreCase))
                     return doc.id;
@@ -591,7 +591,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public IEnumerable<int> GetAnswerIDsForQuestion(string question)
         {
             List<int> anwerIds = new List<int>();
-            foreach (var t in KBData)
+            foreach (var t in KBCache)
             {
                 foreach(var q in t.questions)
                 {
