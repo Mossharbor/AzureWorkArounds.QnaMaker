@@ -163,7 +163,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 foreach (var did in updateRootObject.delete?.ids)
                     answerIdsChecked.Add(did);
 
-                int[] answerIDs = maker.GetAnswerIDsForQuestion(question);
+                var answerIDs = maker.GetAnswerIDsForQuestion(question);
                 foreach (var answerId in answerIDs)
                 {
                     // remove it from any already updated  objects
@@ -262,9 +262,9 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="question"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder AddQuestionAndAnswer(string answer, string question)
+        public QnaUpdateBuilder AddAnswerToQuestion(string answer, string question)
         {
-            return this.AddQuestionsAndAnswer(answer, new string[] { question });
+            return this.AddAnswerToQuestions(answer, new string[] { question });
         }
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="questions"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder AddQuestionsAndAnswer(string answer, string[] questions)
+        public QnaUpdateBuilder AddAnswerToQuestions(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
@@ -372,7 +372,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// Run through the function chain and actually build the Json the call the update using the QnaMaker Rest API
         /// </summary>
         /// <returns>true if we got back a successful http response code from the rest api</returns>
-        public bool Update()
+        public bool UpdateKnowledgebase()
         {
             var t = this.fn(null);
             bool success = maker.Update(t);

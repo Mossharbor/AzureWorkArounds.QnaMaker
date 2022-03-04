@@ -41,7 +41,6 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
             this.azureServicName = azureServicName;
             this.endpoint = region;
-            this.key = GetPrimaryEndpointKey(ocpApimSubscriptionKey);
         }
 
         /// <summary>
@@ -77,7 +76,6 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
             this.azureServicName = azureServicName;
             this.endpoint = region;
-            this.key = GetPrimaryEndpointKey(ocpApimSubscriptionKey);
         }
 
         /// <summary>
@@ -128,7 +126,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             this.knowledgeBaseId = this.details?.id;
         }
 
-        private Qnadocument[] kbData = null;
+        private IEnumerable<Qnadocument> kbData = null;
 
         public KnowledgeBaseDetails GetDetails()
         {
@@ -263,11 +261,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <summary>
         /// This is a full list of all the data in the kownledge base
         /// </summary>
-        public  Qnadocument[] KBData
+        public  IEnumerable<Qnadocument> KBData
         {
             get
             {
-                if (null == kbData || 0 == kbData.Length)
+                if (null == kbData || kbData.Any())
                     kbData = GetKnowledgebaseData();
                 return kbData;
             }
@@ -281,27 +279,6 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             this.kbData = null;
         }
 
-        /// <summary>
-        /// Publishes the test environment to production.
-        /// </summary>
-        public void Publish()
-        {
-            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
-            string service = "/qnamaker/v4.0";
-            string method = "/knowledgebases/{0}/";
-            var method_kb = String.Format(method, this.knowledgebase);
-            var uri = host + service + method_kb;
-            using (var client = new HttpClient())
-            using (var request = new HttpRequestMessage())
-            {
-                request.Method = HttpMethod.Post;
-                request.RequestUri = new Uri(uri);
-                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
-
-                var response = client.SendAsync(request).Result;
-            }
-        }
-
         internal bool Update(UpdateRootobject toPublish)
         {
             if (null == toPublish.add?.qnaList && null == toPublish.delete?.ids && null == toPublish.update?.qnaList)
@@ -313,7 +290,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 this.knowledgeBaseId = this.details.id;
             }
             
-            string host = $"https://{this.endpoint}.api.cognitive.microsoft.com";
+            string host = $"https://{this.azureServicName}.{baseUrl}";
             string service = "/qnamaker/v4.0";
             string method = "/knowledgebases/{0}";
             var method_with_id = String.Format(method, this.knowledgeBaseId);
@@ -445,7 +422,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public bool DeleteAnswer(string answer)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveAnswer(answer).Update();
+            return builder.Begin(this).RemoveAnswer(answer).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -456,7 +433,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public bool DeleteQuestion(string question)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestion(question).Update();
+            return builder.Begin(this).RemoveQuestion(question).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -468,7 +445,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public bool DeleteQuestion(string answer, string question)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestion(answer, question).Update();
+            return builder.Begin(this).RemoveQuestion(answer, question).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -480,25 +457,42 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public bool DeleteQuestions(string answer, string[] questions)
         {
             QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestions(answer, questions).Update();
+            return builder.Begin(this).RemoveQuestions(answer, questions).UpdateKnowledgebase();
         }
 
         /// <summary>
         /// Call the Knowledge base and get it to return an answer
         /// </summary>
         /// <param name="question">The question we would like to run through the kb</param>
+        /// <param name="env">the environment we are going to query</param>
         /// <param name="count">the number of answers we would like to return (3 is default)</param>
+        /// <param name="scorethreshold">the threshold in which to accept something as an answer</param>
         /// <returns>a list of answers</returns>
-        public Answer[] GenerateAnswer(string question, int count = 3)
+        public IEnumerable<Answer> GenerateAnswer(string question, EnvironmentType env = EnvironmentType.Test, int count = 3, int scorethreshold = 30)
         {
-            string questionJson = "{ \"question\":\""+ question + "\", \"top\":\""+ count + "\"";
-            string RequestURI = String.Format("{0}{1}{2}", @"https://"+ azureServicName+".azurewebsites.net/qnamaker/knowledgebases/", this.knowledgebase, @"/generateAnswer");
+            if (null == this.key)
+            {
+                this.key = GetPrimaryEndpointKey(ocpApimSubscriptionKey);
+            }
+
+            //Create my object
+            var questionObject = new
+            {
+                question = question,
+                top = count,
+                isTest = env == EnvironmentType.Test ? "true" : "false",
+                scoreThreshold = scorethreshold,
+            };
+
+
+            string questionJson = JsonConvert.SerializeObject(questionObject);
+            string RequestURI = String.Format("{0}{1}{2}", @"https://"+ azureServicName+".azurewebsites.net/qnamaker/knowledgebases/", this.knowledgeBaseId, @"/generateAnswer");
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
             {
                 //client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
                 HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, RequestURI);
                 requestMessage.Content = new StringContent(questionJson,Encoding.UTF8, "application/json");
-                client.DefaultRequestHeaders.Add("Authorization", this.key);
+                requestMessage.Headers.Add("Authorization", this.key);
 
                 HttpResponseMessage msg = client.SendAsync(requestMessage).Result;
                 var jsonResponse = msg.Content.ReadAsStringAsync().Result;
@@ -539,7 +533,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
-        private Qnadocument[] GetKnowledgebaseData(EnvironmentType env = EnvironmentType.Test)
+        private IEnumerable<Qnadocument> GetKnowledgebaseData(EnvironmentType env = EnvironmentType.Test)
         {
             var response = GetKnowledgebaseJson(env);
             return JsonConvert.DeserializeObject<KnowledgeBaseRootobject>(response).qnaDocuments;
@@ -594,7 +588,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// </summary>
         /// <param name="question">The question we are looking for</param>
         /// <returns>the specific id for a given answer</returns>
-        public int[] GetAnswerIDsForQuestion(string question)
+        public IEnumerable<int> GetAnswerIDsForQuestion(string question)
         {
             List<int> anwerIds = new List<int>();
             foreach (var t in KBData)
@@ -606,13 +600,34 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                 }
             }
 
-            return anwerIds.ToArray();
+            return anwerIds;
         }
 
         public void Train()
         {
             // POST {RuntimeEndpoint}/qnamaker/knowledgebases/{kbId}/train
-            string uri = $"https://{this.endpoint}.api.cognitive.microsoft.com/qnamaker/knowledgebases/{this.knowledgebase}/train";
+            string uri = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v5.0-preview.2/knowledgebases/{this.knowledgeBaseId}/train";
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Post;
+                request.RequestUri = new Uri(uri);
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ocpApimSubscriptionKey);
+
+                var response = client.SendAsync(request).Result;
+
+                response.EnsureSuccessStatusCode();
+
+                //response.Content.ReadAsStringAsync().Result
+            }
+        }
+
+        /// <summary>
+        /// Publishes the test environment to production.
+        /// </summary>
+        public void Publish()
+        {
+            string uri = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v4.0/knowledgebases/{this.knowledgeBaseId}";
             using (var client = new HttpClient())
             using (var request = new HttpRequestMessage())
             {

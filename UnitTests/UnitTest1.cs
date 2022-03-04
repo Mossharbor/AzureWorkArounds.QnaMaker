@@ -6,6 +6,7 @@ namespace UnitTests
     using Mossharbor.AzureWorkArounds.QnaMaker;
     using System.Collections.Generic;
     using System.Configuration;
+    using System.Linq;
 
     [TestClass]
     public class QnaMakerUnitTests
@@ -43,13 +44,66 @@ namespace UnitTests
         [TestMethod]
         public void GetAnswer()
         {
+            var qna = GetQnaMaker(nameof(GetAnswer));
             try
             {
-                var qna = GetQnaMaker(nameof(GetAnswer));
-                var answers = qna.GenerateAnswer("hi");
+                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                bool success = builder
+                                .Begin(qna)
+                                .AddAnswerToQuestion("Sunny", "What is the weather like?")
+                                .UpdateKnowledgebase();
+
+                // qna.Train();
+                // qna.Publish();
+
+                var answers = qna.GenerateAnswer("What is the weather like?");
+
+                bool exists = answers.FirstOrDefault(p => p.answer == "Sunny") != null;
+                Assert.IsTrue(exists);
             }
             finally
             {
+                qna.DeleteKnowledgeBase();
+            }
+        }
+
+        [TestMethod]
+        public void GetAnswerAfterPublishFromProd()
+        {
+            var qna = GetQnaMaker(nameof(GetAnswer));
+            try
+            {
+                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                bool success = builder
+                                .Begin(qna)
+                                .AddAnswerToQuestion("Sunny", "What is the weather like?")
+                                .UpdateKnowledgebase();
+
+                Assert.IsTrue(success);
+
+                // qna.Train();
+                qna.Publish();
+
+                success = builder
+                                .Begin(qna)
+                                .AddAnswerToQuestion("Cloudy", "What is the weather like?")
+                                .UpdateKnowledgebase();
+
+                var answers = qna.GenerateAnswer("What is the weather like?", EnvironmentType.Prod);
+
+                bool sunny = answers.FirstOrDefault(p => p.answer == "Sunny") != null;
+                bool cloudy = answers.FirstOrDefault(p => p.answer == "Cloudy") != null;
+                Assert.IsTrue(sunny);
+                Assert.IsFalse(cloudy);
+
+                answers = qna.GenerateAnswer("What is the weather like?", EnvironmentType.Test);
+
+                cloudy = answers.FirstOrDefault(p => p.answer == "Cloudy") != null;
+                Assert.IsTrue(cloudy);
+            }
+            finally
+            {
+                qna.DeleteKnowledgeBase();
             }
         }
 
@@ -62,8 +116,8 @@ namespace UnitTests
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", "Hello")
-                                .Update();
+                                .AddAnswerToQuestion("Hello", "Hello")
+                                .UpdateKnowledgebase();
 
                 Assert.IsTrue(success);
 
@@ -88,8 +142,8 @@ namespace UnitTests
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionsAndAnswer("Hello", new string[] { "Hello", "There" })
-                                .Update();
+                                .AddAnswerToQuestions("Hello", new string[] { "Hello", "There" })
+                                .UpdateKnowledgebase();
 
                 Assert.IsTrue(success);
                 System.Threading.Thread.Sleep(1000);
@@ -108,16 +162,16 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void UpdateExistingAnswer()
+        public void UpdateExistingAnswerWithAdditionalQuestions()
         {
-            QnAMaker maker = GetQnaMaker(nameof(UpdateExistingAnswer));
+            QnAMaker maker = GetQnaMaker(nameof(UpdateExistingAnswerWithAdditionalQuestions));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionsAndAnswer("Hello", new string[] { "Hello"})
-                                .Update();
+                                .AddAnswerToQuestions("Hello", new string[] { "Hello"})
+                                .UpdateKnowledgebase();
 
                 Assert.IsTrue(success);
 
@@ -130,8 +184,8 @@ namespace UnitTests
 
                 success = builder
                                 .Begin(maker)
-                                .AddQuestionsAndAnswer("Hello", new string[] { "There" })
-                                .Update();
+                                .AddAnswerToQuestions("Hello", new string[] { "There" })
+                                .UpdateKnowledgebase();
                 Assert.IsTrue(success);
                 questions = maker.GetQuestionsFor("Hello");
                 Assert.IsTrue(questions.Contains("There"));
@@ -143,16 +197,16 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void RemoveAnswer()
+        public void DeleteAnswer()
         {
-            QnAMaker maker = GetQnaMaker(nameof(RemoveAnswer));
+            QnAMaker maker = GetQnaMaker(nameof(DeleteAnswer));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionAndAnswer("Hello", "Hello")
-                                .Update();
+                                .AddAnswerToQuestion("Hello", "Hello")
+                                .UpdateKnowledgebase();
 
                 Assert.IsTrue(success);
 
@@ -172,16 +226,16 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void RemoveQuestion()
+        public void DeleteQuestion()
         {
-            QnAMaker maker = GetQnaMaker(nameof(RemoveQuestion));
+            QnAMaker maker = GetQnaMaker(nameof(DeleteQuestion));
             try
             {
                 QnaUpdateBuilder builder = new QnaUpdateBuilder();
                 bool success = builder
                                 .Begin(maker)
-                                .AddQuestionsAndAnswer("Hello", new string[] { "There" , "Again"})
-                                .Update();
+                                .AddAnswerToQuestions("Hello", new string[] { "There" , "Again"})
+                                .UpdateKnowledgebase();
 
                 Assert.IsTrue(success);
 
