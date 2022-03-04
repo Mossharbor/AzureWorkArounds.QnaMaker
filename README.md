@@ -8,17 +8,19 @@ Install the nuget package:  [Install-Package Mossharbor.AzureWorkArounds.QnaMake
 using Mossharbor.AzureWorkArounds.QnaMaker;
 
 // Ask a question
-QnAMaker maker =new QnAMaker("", "", "", ""); // TODO enter your credentials in here!!
-var answers = maker.GenerateAnswer("hi");
+QnAKnowledgebase kb =new QnAKnowledgebase(<qna service name>, <knowledge base name>, <ocp-apim-subscription-key>); // TODO enter your credentials in here!!
+var answers = kb.GenerateAnswer("hi");
 
 // Building/Modifying existing QnA information
-QnaUpdateBuilder builder = new QnaUpdateBuilder();
+QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
 
 // add new answer and questions to your qna knowledgebase
 builder
-    .Begin(maker)
-    .AddQuestionAndAnswer("Hello", new string[] {"Hello", "There"})
+    .Modify(maker)
+    .AddAnswerToQuestions("Hello", new string[] {"Hello", "There"})
     .Update();
+
+kb.Publish();
 
 List<string> answers = maker.GetAnswerStrings();
 List<string> questions = maker.GetQuestionsFor("Hello");
