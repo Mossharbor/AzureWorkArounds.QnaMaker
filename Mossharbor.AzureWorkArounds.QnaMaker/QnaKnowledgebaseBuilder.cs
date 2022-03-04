@@ -10,14 +10,17 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
     /// <summary>
     /// This class builds up the json file that the Update and Replace QnaMaker Rest api's require.
     /// </summary>
-    public class QnaUpdateBuilder
+    public class QnaKnowledgebaseBuilder
+
     {
-        private QnAMaker maker = null;
+        private QnAKnowledgebase kb = null;
 
         /// <summary>
         /// This is the function that modifies the Activity we are trying to build
         /// </summary>
         private Func<UpdateRootobject, UpdateRootobject> fn = null;
+
+        public QnAKnowledgebase Knowledgebase { get => kb;}
 
         /// <summary>
         /// This function composes the builder function
@@ -36,10 +39,27 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <summary>
         /// Begin building the QnaMaker Json
         /// </summary>
+        /// <param name="kb">the exiting knowledge base to start with</param>
         /// <returns>A builder to be used in the builder pattern</returns>
-        public QnaUpdateBuilder Begin(QnAMaker maker)
+        public QnaKnowledgebaseBuilder Modify(QnAKnowledgebase kb)
         {
-            this.maker = maker;
+            this.kb = kb;
+            this.fn = (ignored) => new UpdateRootobject();
+            return this;
+        }
+
+        /// <summary>
+        /// Begin building the QnaMaker Json
+        /// </summary>
+        /// <param name="azureServicName">the name of the qnamaker service</param>
+        /// <param name="knowledgebaseName">the knowledgebase name we want to create</param>
+        /// <param name="ocpApimSubscriptionKey">the key use for accessing this resource</param>
+        /// <param name="region">the region to use (defaults to westus)</param>
+        /// <returns>A builder to be used in the builder pattern</returns>
+        public QnaKnowledgebaseBuilder Create(string azureServicName, string knowledgebaseName, string ocpApimSubscriptionKey, string region = "westus")
+        {
+            this.kb = new QnAKnowledgebase(azureServicName, knowledgebaseName, ocpApimSubscriptionKey, region);
+            this.Knowledgebase.CreateIfDoesntExist();
             this.fn = (ignored) => new UpdateRootobject();
             return this;
         }
@@ -111,7 +131,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="question"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder RemoveQuestion(string answer, string question)
+        public QnaKnowledgebaseBuilder RemoveQuestion(string answer, string question)
         {
             return RemoveQuestions(answer, new string[] { question });
         }
@@ -122,11 +142,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="questions"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder RemoveQuestions(string answer, string[] questions)
+        public QnaKnowledgebaseBuilder RemoveQuestions(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
-                int answerId = maker.GetAnswerID(answer);
+                int answerId = this.Knowledgebase.GetAnswerID(answer);
                 if (answerId < 0)
                     return updateRootObject;
 
@@ -153,18 +173,18 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// </summary>
         /// <param name="question"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder RemoveQuestion(string question)
+        public QnaKnowledgebaseBuilder RemoveQuestion(string question)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
-                maker.ResetCache();
+                this.Knowledgebase.ResetCache();
                 bool removed = false;
                 List<int> answerIdsChecked = new List<int>();
                 List<int> answerIdsToDelete = new List<int>();
                 foreach (var did in updateRootObject.delete?.ids)
                     answerIdsChecked.Add(did);
 
-                var answerIDs = maker.GetAnswerIDsForQuestion(question);
+                var answerIDs = this.Knowledgebase.GetAnswerIDsForQuestion(question);
                 foreach (var answerId in answerIDs)
                 {
                     // remove it from any already updated  objects
@@ -195,7 +215,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                     }
 
                     // remove it from the knowledgebase if we do not already have it.
-                    foreach (var q in maker.KBCache)
+                    foreach (var q in this.Knowledgebase.KBCache)
                     {
                         if (answerIdsChecked.Contains(q.id))
                             continue;
@@ -230,12 +250,12 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// </summary>
         /// <param name="answer"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder RemoveAnswer(string answer)
+        public QnaKnowledgebaseBuilder RemoveAnswer(string answer)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
                 bool removed = false;
-                int answerId = maker.GetAnswerID(answer);
+                int answerId = this.Knowledgebase.GetAnswerID(answer);
 
                 if (updateRootObject.delete?.ids == null || !updateRootObject.delete.ids.Any())
                 {
@@ -263,7 +283,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="question"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder AddAnswerToQuestion(string answer, string question)
+        public QnaKnowledgebaseBuilder AddAnswerToQuestion(string answer, string question)
         {
             return this.AddAnswerToQuestions(answer, new string[] { question });
         }
@@ -274,11 +294,11 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="answer"></param>
         /// <param name="questions"></param>
         /// <returns>The builder for the continuation</returns>
-        public QnaUpdateBuilder AddAnswerToQuestions(string answer, string[] questions)
+        public QnaKnowledgebaseBuilder AddAnswerToQuestions(string answer, string[] questions)
         {
             this.fn = Compose(this.fn, (updateRootObject) =>
             {
-                int answerId = maker.GetAnswerID(answer);
+                int answerId = this.Knowledgebase.GetAnswerID(answer);
 
                 if (answerId >= 0)
                 {
@@ -299,7 +319,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
                         if (null == updateRootObject.update)
                             updateRootObject.update = new Update();
 
-                        Qnalist answerToUpdate = maker.KBCache.FirstOrDefault(p => p.id == answerId);
+                        Qnalist answerToUpdate = this.Knowledgebase.KBCache.FirstOrDefault(p => p.id == answerId);
 
                         if (null != answerToUpdate)
                         {
@@ -376,8 +396,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public bool UpdateKnowledgebase()
         {
             var t = this.fn(null);
-            bool success = maker.Update(t);
-            maker.ResetCache();
+            bool success = this.Knowledgebase.Update(t);
+            this.Knowledgebase.ResetCache();
             return success;
         }
     }

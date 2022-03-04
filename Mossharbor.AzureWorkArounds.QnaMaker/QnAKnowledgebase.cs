@@ -16,7 +16,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
     /// <summary>
     /// This class directly interacts with the QnaMakers rest api
     /// </summary>
-    public class QnAMaker
+    public class QnAKnowledgebase
+
     {
         static string baseUrl = "cognitiveservices.azure.com";
         string knowledgebase;
@@ -35,7 +36,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
         /// <param name="region">the region westus by default</param>
         /// <remarks> we load the endpoint key if we need to using the ocpApimSubscriptionKey</remarks>
-        public QnAMaker(string azureServicName, string knowledgebase, string ocpApimSubscriptionKey, string region = "westus")
+        public QnAKnowledgebase(string azureServicName, string knowledgebase, string ocpApimSubscriptionKey, string region = "westus")
         {
             this.knowledgebase = knowledgebase;
             this.ocpApimSubscriptionKey = ocpApimSubscriptionKey;
@@ -51,7 +52,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="endpointKey">This is your endpoint key</param>
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
         /// <param name="region">the region westus by default</param>
-        public QnAMaker(string azureServicName, string knowledgebase, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
+        public QnAKnowledgebase(string azureServicName, string knowledgebase, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
         {
             this.knowledgebase = knowledgebase;
             this.key = endpointKey;
@@ -69,7 +70,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
         /// <param name="region">the region westus by default</param>
         /// <remarks> we load the endpoint key if we need to using the ocpApimSubscriptionKey</remarks>
-        public QnAMaker(string azureServicName, string knowledgebase, Guid kowledgebaseId, string ocpApimSubscriptionKey, string region = "westus")
+        public QnAKnowledgebase(string azureServicName, string knowledgebase, Guid kowledgebaseId, string ocpApimSubscriptionKey, string region = "westus")
         {
             this.knowledgebase = knowledgebase;
             this.knowledgeBaseId = kowledgebaseId.ToString();
@@ -87,7 +88,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <param name="endpointKey">This is your endpoint key</param>
         /// <param name="ocpApimSubscriptionKey">This is your ocpApim subscription key</param>
         /// <param name="region">the region westus by default</param>
-        public QnAMaker(string azureServicName, string knowledgebase, Guid kowledgebaseId, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
+        public QnAKnowledgebase(string azureServicName, string knowledgebase, Guid kowledgebaseId, string endpointKey, string ocpApimSubscriptionKey, string region = "westus")
         {
             this.knowledgebase = knowledgebase;
             this.knowledgeBaseId = kowledgebaseId.ToString();
@@ -115,7 +116,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
             }
         }
 
-        public void CreateKnowledgeBaseIfDoesntExist()
+        public void CreateIfDoesntExist()
         {
             if (!this.KnowledgeBaseExists())
             {
@@ -421,8 +422,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns>true if the rest call returns success</returns>
         public bool DeleteAnswer(string answer)
         {
-            QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveAnswer(answer).UpdateKnowledgebase();
+            QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
+            return builder.Modify(this).RemoveAnswer(answer).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -432,8 +433,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns>true if the rest call returns success</returns>
         public bool DeleteQuestion(string question)
         {
-            QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestion(question).UpdateKnowledgebase();
+            QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
+            return builder.Modify(this).RemoveQuestion(question).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -444,8 +445,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns>true if the rest call returns success</returns>
         public bool DeleteQuestion(string answer, string question)
         {
-            QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestion(answer, question).UpdateKnowledgebase();
+            QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
+            return builder.Modify(this).RemoveQuestion(answer, question).UpdateKnowledgebase();
         }
 
         /// <summary>
@@ -456,8 +457,8 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         /// <returns></returns>
         public bool DeleteQuestions(string answer, string[] questions)
         {
-            QnaUpdateBuilder builder = new QnaUpdateBuilder();
-            return builder.Begin(this).RemoveQuestions(answer, questions).UpdateKnowledgebase();
+            QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
+            return builder.Modify(this).RemoveQuestions(answer, questions).UpdateKnowledgebase();
         }
 
         /// <summary>

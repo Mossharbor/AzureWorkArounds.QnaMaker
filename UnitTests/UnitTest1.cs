@@ -11,15 +11,16 @@ namespace UnitTests
     [TestClass]
     public class QnaMakerUnitTests
     {
-        List<QnAMaker> makers = new List<QnAMaker>();
+        List<QnAKnowledgebase> makers = new List<QnAKnowledgebase>();
 
-        private QnAMaker GetQnaMaker(string kbToUseForTesting = "qnamakertestkb", bool createIfNotExist = true)
+        private QnAKnowledgebase GetQnaMaker(string kbToUseForTesting = "qnamakertestkb", bool createIfNotExist = true)
         {
+            // note you can see these here: https://www.qnamaker.ai/Home/MyServices
             string ocpApimSubscriptionKey = ConfigurationManager.AppSettings["ocpApimSubscriptionKey"];
 
-            var maker = new QnAMaker(ConfigurationManager.AppSettings["qnaMakerName"], kbToUseForTesting, ocpApimSubscriptionKey);
+            var maker = new QnAKnowledgebase(ConfigurationManager.AppSettings["qnaMakerName"], kbToUseForTesting, ocpApimSubscriptionKey);
             if (createIfNotExist)
-                maker.CreateKnowledgeBaseIfDoesntExist();
+                maker.CreateIfDoesntExist();
             makers.Add(maker);
             return maker;
         }
@@ -27,11 +28,32 @@ namespace UnitTests
         [TestMethod]
         public void CreateEmptyKB()
         {
-            QnAMaker qna = null;
+            QnAKnowledgebase qna = null;
             try
             {
                 qna = GetQnaMaker(nameof(CreateEmptyKB));
 
+                string kb = qna.GetKnowledgebaseJson();
+                Assert.IsTrue(kb.Contains("qnaDocuments"));
+            }
+            finally
+            {
+                qna.DeleteKnowledgeBase();
+            }
+        }
+
+        [TestMethod]
+        public void CreateKBThroughBuilder()
+        {
+            QnAKnowledgebase qna = null;
+            try
+            {
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
+                bool success = builder
+                                .Create(ConfigurationManager.AppSettings["qnaMakerName"], nameof(CreateKBThroughBuilder), ConfigurationManager.AppSettings["ocpApimSubscriptionKey"])
+                                .UpdateKnowledgebase();
+
+                qna = builder.Knowledgebase;
                 string kb = qna.GetKnowledgebaseJson();
                 Assert.IsTrue(kb.Contains("qnaDocuments"));
             }
@@ -47,9 +69,9 @@ namespace UnitTests
             var qna = GetQnaMaker(nameof(GetAnswer));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(qna)
+                                .Modify(qna)
                                 .AddAnswerToQuestion("Sunny", "What is the weather like?")
                                 .UpdateKnowledgebase();
 
@@ -73,9 +95,9 @@ namespace UnitTests
             var qna = GetQnaMaker(nameof(GetAnswer));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(qna)
+                                .Modify(qna)
                                 .AddAnswerToQuestion("Sunny", "What is the weather like?")
                                 .UpdateKnowledgebase();
 
@@ -85,7 +107,7 @@ namespace UnitTests
                 qna.Publish();
 
                 success = builder
-                                .Begin(qna)
+                                .Modify(qna)
                                 .AddAnswerToQuestion("Cloudy", "What is the weather like?")
                                 .UpdateKnowledgebase();
 
@@ -110,12 +132,12 @@ namespace UnitTests
         [TestMethod]
         public void AddQuestionAndAnswer()
         {
-            QnAMaker maker = GetQnaMaker(nameof(AddQuestionAndAnswer));
+            QnAKnowledgebase maker = GetQnaMaker(nameof(AddQuestionAndAnswer));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestion("Hello", "Hello")
                                 .UpdateKnowledgebase();
 
@@ -135,13 +157,13 @@ namespace UnitTests
         [TestMethod]
         public void AddMultipleQuestionAndAnswer()
         {
-            QnAMaker maker = GetQnaMaker(nameof(AddMultipleQuestionAndAnswer));
+            QnAKnowledgebase maker = GetQnaMaker(nameof(AddMultipleQuestionAndAnswer));
             Assert.IsTrue(maker.GetDetails() != null);
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestions("Hello", new string[] { "Hello", "There" })
                                 .UpdateKnowledgebase();
 
@@ -164,12 +186,12 @@ namespace UnitTests
         [TestMethod]
         public void UpdateExistingAnswerWithAdditionalQuestions()
         {
-            QnAMaker maker = GetQnaMaker(nameof(UpdateExistingAnswerWithAdditionalQuestions));
+            QnAKnowledgebase maker = GetQnaMaker(nameof(UpdateExistingAnswerWithAdditionalQuestions));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestions("Hello", new string[] { "Hello"})
                                 .UpdateKnowledgebase();
 
@@ -183,7 +205,7 @@ namespace UnitTests
                 Assert.IsFalse(questions.Contains("There"));
 
                 success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestions("Hello", new string[] { "There" })
                                 .UpdateKnowledgebase();
                 Assert.IsTrue(success);
@@ -201,12 +223,12 @@ namespace UnitTests
         [TestMethod]
         public void DeleteAnswer()
         {
-            QnAMaker maker = GetQnaMaker(nameof(DeleteAnswer));
+            QnAKnowledgebase maker = GetQnaMaker(nameof(DeleteAnswer));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestion("Hello", "Hello")
                                 .UpdateKnowledgebase();
 
@@ -231,12 +253,12 @@ namespace UnitTests
         [TestMethod]
         public void DeleteQuestion()
         {
-            QnAMaker maker = GetQnaMaker(nameof(DeleteQuestion));
+            QnAKnowledgebase maker = GetQnaMaker(nameof(DeleteQuestion));
             try
             {
-                QnaUpdateBuilder builder = new QnaUpdateBuilder();
+                QnaKnowledgebaseBuilder builder = new QnaKnowledgebaseBuilder();
                 bool success = builder
-                                .Begin(maker)
+                                .Modify(maker)
                                 .AddAnswerToQuestions("Hello", new string[] { "There" , "Again"})
                                 .UpdateKnowledgebase();
 
