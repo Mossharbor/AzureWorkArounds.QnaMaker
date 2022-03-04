@@ -10,6 +10,7 @@ $env:NUGETVERSIONPROPSPATH = $env:Root
 $env:NUGETVERSIONPROPSPATH += "\.build\dependency.version.props"
 $env:VERSIONFILE = ${env:ROOT}
 $env:VERSIONFILE +=  "\Mossharbor.AzureWorkArounds.QnaMaker\Package.nuspec"
+$testConfigFile = "${env:ROOT}\UnitTests\app.config"
  
 if (-not [Environment]::Is64BitProcess) {
     write-host "Please run this command window in AMD64 processor architecture.`r`n"
@@ -54,6 +55,74 @@ function opensln {
 #   runtests  test_xyz == runs a specific tests (NOTE: test_xyz is a wildcard match)
 #
 #############################################################################################
+
+
+function azsetuptestenv {
+	param(
+	    [Parameter(Mandatory = $true)]
+        [String] $resourceGroup
+    )
+
+	$location = "West US"
+    $userName = $env:USERNAME.substring(0, [System.Math]::Min(7, $env:USERNAME.Length)).ToLower()
+    $qnaServiceName = ("qnaworkaroundtest-"+$resourceGroup).ToLower()
+    $cogServiceKeyName = ("qnaworkaroundtestkey-"+$resourceGroup).ToLower()
+	$resourceGroupName =($userName+"-"+$resourceGroup).ToLower()
+    $resourceGroupName = $resourceGroupName.substring(0, [System.Math]::Min(24, $resourceGroupName.Length))
+
+	New-AzResourceGroup -Name $resourceGroupName -Location $location -ErrorAction Stop
+
+    # Start the deployment
+    Write-Host "Starting qna deployment...";
+    $templateFilePath = "${env:ROOT}\.build\rmqnatemplate.json"
+    $parametersFilePath = "${env:ROOT}\.build\rmqnaparameters.json"
+    $parameterObject = @{
+        location= $location;
+        location3=$location;
+        azureSearchLocation=$location;
+        azureSearchSku="free";
+        sku = "S0";
+        searchHostingMode="Default";
+        name = $qnaServiceName;
+        appName = $qnaServiceName;
+    }
+
+    New-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateFile $templateFilePath  -TemplateParameterObject $parameterObject
+
+    $cogServicesAccountKey = Get-AzCognitiveServicesAccountKey -ResourceGroupName $resourceGroupName -Name $qnaServiceName
+
+    #
+    # Setup test configuration file
+    #
+    $testConfigFileContent = $testConfigFileContent -replace '%ocpApimSubscriptionKey%', $cogServicesAccountKey.Key1
+    $testConfigFileContent = $testConfigFileContent -replace '%qnaMakerName%', $qnaServiceName
+
+    $testConfigFileContent
+
+    Set-Content -path $testConfigFile -Value $testConfigFileContent
+}
+
+function setuptestconfig{
+
+    $testConfigFileContent =@"
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <appSettings>
+    <!-- NOTE these are set by the init script running the azsetuptestenv <resource group name> command in powershell -->
+    <add key="ocpApimSubscriptionKey" value="%ocpApimSubscriptionKey%" />
+    <add key="qnaMakerName" value="%qnaMakerName%" />
+  </appSettings>
+</configuration>
+"@
+
+    if (-not(Test-Path -Path $testConfigFile -PathType Leaf)) {
+        #
+        #  Setup Test Config
+        #
+        Set-Content -path $testConfigFile -Value $testConfigFileContent
+    }
+
+}
  
 function __executetest {
     param(
@@ -618,3 +687,5 @@ function PublishNugetPackages
 		dotnet nuget push $localPath --api-key $nugetApiKey --source https://api.nuget.org/v3/index.json
 	}
 }
+
+setuptestconfig
