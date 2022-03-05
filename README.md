@@ -22,7 +22,7 @@ builder
 kb.Publish();
 
 // Creating a new Knowledgebase
-builder
+builder  
     .Create(<qna service name>, <knowledge base name>, <ocp-apim-subscription-key>)
     .AddAnswerToQuestions("Hello", new string[] {"Hello", "There"})
     .UpdateKnowledgebase();
