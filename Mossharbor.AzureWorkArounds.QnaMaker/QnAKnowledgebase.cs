@@ -607,7 +607,7 @@ namespace Mossharbor.AzureWorkArounds.QnaMaker
         public void Train()
         {
             // POST {RuntimeEndpoint}/qnamaker/knowledgebases/{kbId}/train
-            string uri = $"https://{this.azureServicName}.{baseUrl}/qnamaker/v5.0-preview.2/knowledgebases/{this.knowledgeBaseId}/train";
+            string uri = $"https://{this.azureServicName}.{baseUrl}/qnamaker/knowledgebases/{this.knowledgeBaseId}/train";
             using (var client = new HttpClient())
             using (var request = new HttpRequestMessage())
             {
